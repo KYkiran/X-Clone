@@ -3,7 +3,7 @@
 @plugin "daisyui/theme" {
   name: "black";
   default: true;
-  primary: "#1E40AF";
-  secondary: "#F59E0B";
+  --color-primary: rgb(29, 155, 240);
+  --color-secondary: rgb(24, 24, 24);
 }
 
