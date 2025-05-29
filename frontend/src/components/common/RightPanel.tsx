@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import type { MouseEvent } from "react"; // Using 'type' import for MouseEvent is a good practice
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton.tsx";
 import { useQuery } from "@tanstack/react-query";
+import useFollow from "../../hooks/useFollow.tsx";
+import LoadingSpinner from "./LoadingSpinner.tsx";
 
 // --- Type Definitions ---
 interface User {
@@ -47,11 +48,7 @@ const RightPanel: React.FC = () => {
     },
   });
 
-  const handleFollowClick = (e: MouseEvent<HTMLButtonElement>): void => {
-    e.preventDefault(); // Prevents the default button click behavior (e.g., form submission)
-    // Add your follow logic here
-    console.log("Follow button clicked!"); // For demonstration
-  };
+  const {follow,isPending}=useFollow();
 
   if(suggestedUsers?.length === 0) return <div className="md:w-64 w-0"></div>
 
@@ -109,9 +106,14 @@ const RightPanel: React.FC = () => {
                 <div>
                   <button
                     className='btn bg-white text-black hover:bg-white hover:opacity-90 rounded-full btn-sm'
-                    onClick={handleFollowClick}
+                    onClick={(e)=>
+                      {
+                        e.preventDefault(); 
+                        follow(user._id); 
+                      
+                    }}
                   >
-                    Follow
+                    {isPending ? <LoadingSpinner size="sm"/> : "Follow"}
                   </button>
                 </div>
               </Link>

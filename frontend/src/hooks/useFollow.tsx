@@ -6,14 +6,18 @@ const useFollow = () => {
 
 	const { mutate: follow, isPending } = useMutation<void, Error, string>({
 		mutationFn: async (userId: string) => {
-			const res = await fetch(`/api/users/follow/${userId}`, {
-				method: "POST",
-			});
-
-			const data = await res.json();
-			if (!res.ok) {
-				throw new Error(data.error || "Something went wrong!");
-			}
+			try {
+                const res = await fetch(`/api/users/follow/${userId}`, {
+                				method: "POST",
+                			});
+                
+                			const data = await res.json();
+                			if (!res.ok) {
+                				throw new Error(data.msg || "Something went wrong!");
+                			}
+            } catch (error) {
+                throw new Error((error as Error).message || "Failed to follow user");
+            }
 		},
 		onSuccess: () => {
 			Promise.all([
