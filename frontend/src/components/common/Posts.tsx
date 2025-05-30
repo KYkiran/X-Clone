@@ -5,16 +5,22 @@ import { useEffect } from "react";
 
 type PostType = {
   _id: string;
-
+  text: string;
+  user: string;
+  likes: string[];
+  comments: string[];
+  createdAt: string;
 };
 
 
 type PostsProps = {
-  feedType: "forYou" | "following"; // Enforces these specific string values
+  feedType: "forYou" | "following" | "posts" | "likes";
+  username:  string | undefined;
+  userId?: string; 
 };
 
 
-const Posts = ({ feedType }: PostsProps) => {
+const Posts = ({ feedType,username, userId }: PostsProps) => {
   
   const getPostEndpoint = (type: PostsProps["feedType"]): string => {
     switch (type) {
@@ -22,6 +28,10 @@ const Posts = ({ feedType }: PostsProps) => {
         return "/api/posts/all";
       case "following":
         return "/api/posts/following";
+      case "posts":
+        return `/api/posts/user/${username}`; // Assuming this is the endpoint for user-specific posts
+      case "likes":
+        return `/api/posts/likes/${userId}`; // Assuming this is the endpoint for user-specific liked posts
       default:
 
         return "/api/posts/all";
@@ -69,7 +79,7 @@ const Posts = ({ feedType }: PostsProps) => {
 
   useEffect(()=>{
     refetch();
-  },[feedType, refetch])
+  },[feedType, refetch, username])
 
   if (isLoading || isRefetching) {
     return (
@@ -97,7 +107,7 @@ const Posts = ({ feedType }: PostsProps) => {
   return (
     <div>
       
-      {data.map((post) => (
+      {data?.map((post) => (
         <Post key={post._id} post={post} />
       ))}
     </div>

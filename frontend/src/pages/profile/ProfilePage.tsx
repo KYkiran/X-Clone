@@ -1,5 +1,5 @@
-import { useRef, useState, type ChangeEvent } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { Link, useParams } from "react-router-dom";
 
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton.tsx";
@@ -12,6 +12,7 @@ import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import { useQuery } from "@tanstack/react-query";
+import { formatMemberSinceDate } from "../../utils/date/index.ts";
 
 interface User {
 	_id: string;
@@ -23,7 +24,10 @@ interface User {
 	link: string;
 	following: string[];
 	followers: string[];
+	createdAt: string;
+  	updatedAt: string;
 }
+
 
 const ProfilePage = () => {
 	useQuery({queryKey:["authUser"]});
@@ -35,20 +39,33 @@ const ProfilePage = () => {
 	const coverImgRef = useRef<HTMLInputElement | null>(null);
 	const profileImgRef = useRef<HTMLInputElement | null>(null);
 
-	const isLoading = false; // Simulating loading state, replace with actual loading logic
+	const {username} = useParams<{username:string}>();
+
+	 // Simulating loading state, replace with actual loading logic
 	const isMyProfile = true;
 
-	const user: User | null = {
-		_id: "1",
-		fullName: "John Doe",
-		username: "johndoe",
-		profileImg: "/avatars/boy2.png",
-		coverImg: "/cover.png",
-		bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-		link: "https://github.com/KYkiran",
-		following: ["1", "2", "3"],
-		followers: ["1", "2", "3"],
-	};
+	
+	const {data: user,isLoading,refetch,isRefetching } = useQuery<User>({
+		queryKey:["userProfile"],
+		queryFn: async () =>{
+			try {
+				const res = await fetch(`/api/users/profile/${username}`);
+				const data = await res.json();
+				
+				console.log(data);
+				
+				
+				if (!res.ok) {
+					throw new Error(data.message || "Failed to fetch user profile");
+				}
+				return data.data;
+			} catch (error) {
+				throw new Error((error as Error).message || "An error occurred while fetching user profile");
+			}
+		}
+	});
+
+	const memberSinceDate = user ? formatMemberSinceDate(user.createdAt) : "";
 
 	const handleImgChange = (e: ChangeEvent<HTMLInputElement>, state: "coverImg" | "profileImg") => {
 		const file = e.target.files?.[0];
@@ -64,13 +81,17 @@ const ProfilePage = () => {
 		}
 	};
 
+	useEffect(()=>{
+		refetch();
+	},[username, refetch])
+
 	return (
 		<>
 			<div className='flex-[4_4_0] border-r border-gray-700 min-h-screen'>
-				{isLoading && <ProfileHeaderSkeleton />}
-				{!isLoading && !user && <p className='text-center text-lg mt-4'>User not found</p>}
+				{(isLoading || isRefetching) && <ProfileHeaderSkeleton />}
+				{!isLoading && !isRefetching && !user && <p className='text-center text-lg mt-4'>User not found</p>}
 				<div className='flex flex-col'>
-					{!isLoading && user && (
+					{!isLoading &&!isRefetching && user && (
 						<>
 							<div className='flex gap-10 px-4 py-2 items-center'>
 								<Link to='/'>
@@ -172,17 +193,17 @@ const ProfilePage = () => {
 									)}
 									<div className='flex gap-2 items-center'>
 										<IoCalendarOutline className='w-4 h-4 text-slate-500' />
-										<span className='text-sm text-slate-500'>Joined July 2021</span>
+										<span className='text-sm text-slate-500'>{memberSinceDate}</span>
 									</div>
 								</div>
 
 								<div className='flex gap-2'>
 									<div className='flex gap-1 items-center'>
-										<span className='font-bold text-xs'>{user.following.length}</span>
+										<span className='font-bold text-xs'>{user.following?.length??0}</span>
 										<span className='text-slate-500 text-xs'>Following</span>
 									</div>
 									<div className='flex gap-1 items-center'>
-										<span className='font-bold text-xs'>{user.followers.length}</span>
+										<span className='font-bold text-xs'>{user.followers?.length??0}</span>
 										<span className='text-slate-500 text-xs'>Followers</span>
 									</div>
 								</div>
@@ -211,7 +232,7 @@ const ProfilePage = () => {
 						</>
 					)}
 
-					<Posts />
+					<Posts username={username} userId={user?._id} feedType={feedType} />
 				</div>
 			</div>
 		</>

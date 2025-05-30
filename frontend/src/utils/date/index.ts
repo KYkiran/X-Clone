@@ -22,8 +22,12 @@ export const formatPostDate = (createdAt: string | Date): string => {
 };
 
 // Formats a join date like "Joined May 2023"
-export const formatMemberSinceDate = (createdAt: string | Date): string => {
+export const formatMemberSinceDate = (createdAt?: string | Date): string => {
+	if (!createdAt) return "";
+
 	const date = new Date(createdAt);
+	if (isNaN(date.getTime())) return "";
+
 	const months = [
 		"January", "February", "March", "April", "May", "June",
 		"July", "August", "September", "October", "November", "December"
@@ -32,3 +36,4 @@ export const formatMemberSinceDate = (createdAt: string | Date): string => {
 	const year = date.getFullYear();
 	return `Joined ${month} ${year}`;
 };
+
