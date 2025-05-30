@@ -1,5 +1,5 @@
 
-# Social Media App
+# Twitter/X Clone Application
 
 A full-stack social media application built with React and Node.js, featuring user authentication, posts, notifications, and social interactions.
 
