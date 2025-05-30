@@ -1,6 +1,5 @@
 import { useEffect, useState, type ChangeEvent } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
 
 interface FormData {
 	fullName: string;
@@ -37,57 +36,14 @@ const EditProfileModal = ({ authUser }: EditProfileModalProps) => {
 		currentPassword: "",
 	});
 
-	const queryClient = useQueryClient();
 
-	const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
-		mutationFn: async (): Promise<any> => {
-			try {
-				const res = await fetch('/api/users/update', {
-					method: "POST",
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(formData),
-				});
-				
-				const responseData = await res.json();
-				
-				if (!res.ok) {
-					throw new Error(responseData.message || "Failed to update profile");
-				}
-				
-				return responseData;
-			} catch (error) {
-				throw new Error((error as Error).message || "An error occurred while updating profile");
-			}
-		},
-		onSuccess: () => {
-			toast.success("Profile Updated Successfully");
-			
-			// Close the modal
-			const modal = document.getElementById("edit_profile_modal") as HTMLDialogElement;
-			modal?.close();
-			
-			// Invalidate queries to refetch updated data
-			Promise.all([
-				queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-				queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
-			]);
-		},
-		onError: (error: Error) => {
-			toast.error(error.message);
-		}
-	});
+	const {updateProfile,isUpdatingProfile} = useUpdateUserProfile();
 
 	const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		const { name, value } = e.target;
 		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		updateProfile();
-	};
 
 	useEffect(() => {
 		if (authUser) {
@@ -117,7 +73,10 @@ const EditProfileModal = ({ authUser }: EditProfileModalProps) => {
 			<dialog id='edit_profile_modal' className='modal'>
 				<div className='modal-box border rounded-md border-gray-700 shadow-md'>
 					<h3 className='font-bold text-lg my-3'>Update Profile</h3>
-					<form className='flex flex-col gap-4' onSubmit={handleSubmit}>
+					<form className='flex flex-col gap-4' onSubmit={(e)=>{
+						e.preventDefault();
+						updateProfile(formData);
+					}}>
 						<div className='flex flex-wrap gap-2'>
 							<input
 								type='text'
